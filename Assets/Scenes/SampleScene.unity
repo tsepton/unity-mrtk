@@ -337,7 +337,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6df9612e26538674eb50b58640946828, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  sphereMarker: {fileID: 8236506436312751961, guid: c8c36373e092a3d4886b02b27346d4c9, type: 3}
+  handedness: 2
+  useDebug: 1
+  debugUi: {fileID: 8444913688083646382, guid: 9472d960deea17d4c9932aed7e8eea02, type: 3}
+  debugMode: 0
 --- !u!4 &872201238
 Transform:
   m_ObjectHideFlags: 0
