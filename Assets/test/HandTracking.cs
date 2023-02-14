@@ -7,7 +7,7 @@ using UnityEngine.Events;
 
 public class HandTracking : MonoBehaviour {
   [Header("Gesture Settings")] 
-  public Handedness handedness = Handedness.Right;
+  public Handedness handedness = Handedness.Right; 
   public Gestures openEvent = Gestures.HandWideOpen;
   public Gestures closeEvent = Gestures.HandItalian;
   
@@ -91,11 +91,10 @@ public class HandTracking : MonoBehaviour {
   CustomGesture GetGesture(Gestures id) {
     switch (id) {
       case Gestures.HandWideOpen:
-        return HandWideOpen.Instance;
+        return HandWideOpen.Instance(handedness);
       case Gestures.HandItalian:
-        return HandItalian.Instance;
+        return HandItalian.Instance(handedness);
     }
-
     return null;
   }
 }
