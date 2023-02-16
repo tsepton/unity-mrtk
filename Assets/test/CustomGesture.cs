@@ -41,7 +41,6 @@ public class HandWideOpen: UnityEvent, CustomGesture {
     answer = answer && Math.Abs(HandPoseUtils.RingFingerCurl(Handedness.Any) - RingCurl) <= _threshold;
     answer = answer && Math.Abs(HandPoseUtils.PinkyFingerCurl(Handedness.Any) - PinkyCurl) <= _threshold;
     
-    if (answer) Debug.Log("HandWideOpen is currently occuring");
     return answer;
   }
   
@@ -92,9 +91,25 @@ public class HandItalian : UnityEvent, CustomGesture {
     answer = answer && Math.Abs(HandPoseUtils.MiddleFingerCurl(Handedness.Any) - MiddleCurl) <= _threshold;
     answer = answer && Math.Abs(HandPoseUtils.RingFingerCurl(Handedness.Any) - RingCurl) <= _threshold;
     answer = answer && Math.Abs(HandPoseUtils.PinkyFingerCurl(Handedness.Any) - PinkyCurl) <= _threshold;
+    answer = answer && IsNotDefaultPosition();
     
-    if (answer) Debug.Log("HandItalian is currently occuring");
     return answer;
+  }
+
+  /// <summary>
+  /// Differentiate between default hand position and italian hand gesture.
+  /// </summary>
+  /// <returns>true if thumb tip is closer to all other finger tips than to its base.</returns>
+  public bool IsNotDefaultPosition() {
+      if (HandJointUtils.TryGetJointPose(TrackedHandJoint.ThumbTip, _handedness, out var thumbTipPose) &&
+          HandJointUtils.TryGetJointPose(TrackedHandJoint.PinkyTip, _handedness, out var pinkyTipPose) &&
+          HandJointUtils.TryGetJointPose(TrackedHandJoint.ThumbProximalJoint, _handedness, out var thumbMiddlePose))
+      {
+        Vector3 thumbTipToMetacarpal = thumbTipPose.Position - thumbMiddlePose.Position; 
+        Vector3 pinkyTipToThumbTip = pinkyTipPose.Position - thumbTipPose.Position;
+        return pinkyTipToThumbTip.sqrMagnitude <= thumbTipToMetacarpal.sqrMagnitude;
+      }
+      return false;
   }
 
   private HandItalian(Handedness handedness) {
