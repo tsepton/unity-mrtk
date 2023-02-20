@@ -1,4 +1,5 @@
 using JetBrains.Annotations;
+using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
 using Microsoft.MixedReality.Toolkit.Utilities;
 using UnityEngine;
@@ -10,16 +11,23 @@ public class HandTrackingController : MonoBehaviour {
   public Handedness handedness = Handedness.Right; 
   public Gestures openEvent = Gestures.HandWideOpen;
   public Gestures closeEvent = Gestures.HandItalian;
+  public Gestures pointingEvent = Gestures.HandPointing;
   
   [Header("Gesture registration")] 
   public UnityEvent open;
   public UnityEvent close;
+  public GazeTargetEvent fourthSelection;
 
   [Header("Debugger Settings")] public bool useDebug;
   public GameObject debugUi;
   public Debugger.DebugMode debugMode = Debugger.DebugMode.Curl;
   private Debugger _debugger;
-
+  
+  private bool _constrainerState;
+  public bool ConstrainerState {
+    set => _constrainerState = value;
+  }
+  
   void Start() {
     if (useDebug) _debugger = new Debugger(debugUi, transform, handedness);
   }
@@ -27,9 +35,13 @@ public class HandTrackingController : MonoBehaviour {
   void Update() {
     if (useDebug) _debugger.DisplayDebug(debugMode);
     
-    if (GetGesture(openEvent).IsOccuring()) open.Invoke();
-    if (GetGesture(closeEvent).IsOccuring()) close.Invoke();
+    if (_constrainerState && GetGesture(openEvent).IsOccuring()) open.Invoke();
+    if (_constrainerState && GetGesture(closeEvent).IsOccuring()) close.Invoke();
+    if (GetGesture(pointingEvent).IsOccuring()) fourthSelection.Invoke(CoreServices.InputSystem.EyeGazeProvider.GazeTarget);
   }
+
+  [System.Serializable]
+  public class GazeTargetEvent: UnityEvent<GameObject> {}
 
   public class Debugger {
     private readonly GameObject _uiObject;
@@ -49,10 +61,10 @@ public class HandTrackingController : MonoBehaviour {
 
         string text = "";
         switch (mode) {
-          case DebugMode.Curl:
+          case DebugMode.Current:
             text = CurrentGestureText();
             break;
-          case DebugMode.Current:
+          case DebugMode.Curl:
             text = CurlText();
             break;
         }
@@ -84,7 +96,9 @@ public class HandTrackingController : MonoBehaviour {
 
   public enum Gestures {
     HandWideOpen = 0,
-    HandItalian = 1
+    HandItalian = 1,
+    HandPointing = 2,
+    HandFourthOption = 3
   }
 
   [CanBeNull]
@@ -94,6 +108,8 @@ public class HandTrackingController : MonoBehaviour {
         return HandWideOpen.Instance(handedness);
       case Gestures.HandItalian:
         return HandItalian.Instance(handedness);
+      case Gestures.HandFourthOption:
+        return HandFourthOption.Instance(handedness);
     }
     return null;
   }

@@ -7,12 +7,6 @@ using UnityEngine;
 using UnityEngine.Events;
 
 public interface CustomGesture {
-  float ThumbCurl { get; } 
-  float IndexCurl { get; } 
-  float MiddleCurl { get; } 
-  float RingCurl { get; } 
-  float PinkyCurl { get; }
-
   public bool IsOccuring();
 }
 
@@ -36,10 +30,10 @@ public class HandWideOpen: UnityEvent, CustomGesture {
     if (HandJointUtils.FindHand(Handedness.Right) == null) return false;
     
     bool answer = ThumbCurl <= 0.4f;
-    answer = answer && Math.Abs(HandPoseUtils.IndexFingerCurl(Handedness.Any) - IndexCurl) <= _threshold;
-    answer = answer && Math.Abs(HandPoseUtils.MiddleFingerCurl(Handedness.Any) - MiddleCurl) <= _threshold;
-    answer = answer && Math.Abs(HandPoseUtils.RingFingerCurl(Handedness.Any) - RingCurl) <= _threshold;
-    answer = answer && Math.Abs(HandPoseUtils.PinkyFingerCurl(Handedness.Any) - PinkyCurl) <= _threshold;
+    answer = answer && Math.Abs(HandPoseUtils.IndexFingerCurl(_handedness) - IndexCurl) <= _threshold;
+    answer = answer && Math.Abs(HandPoseUtils.MiddleFingerCurl(_handedness) - MiddleCurl) <= _threshold;
+    answer = answer && Math.Abs(HandPoseUtils.RingFingerCurl(_handedness) - RingCurl) <= _threshold;
+    answer = answer && Math.Abs(HandPoseUtils.PinkyFingerCurl(_handedness) - PinkyCurl) <= _threshold;
     
     return answer;
   }
@@ -86,11 +80,11 @@ public class HandItalian : UnityEvent, CustomGesture {
   public bool IsOccuring() {
     if (HandJointUtils.FindHand(Handedness.Right) == null) return false;
 
-    bool answer = Math.Abs(HandPoseUtils.ThumbFingerCurl(Handedness.Any) - ThumbCurl) <= _threshold;
-    answer = answer && Math.Abs(HandPoseUtils.IndexFingerCurl(Handedness.Any) - IndexCurl) <= _threshold;
-    answer = answer && Math.Abs(HandPoseUtils.MiddleFingerCurl(Handedness.Any) - MiddleCurl) <= _threshold;
-    answer = answer && Math.Abs(HandPoseUtils.RingFingerCurl(Handedness.Any) - RingCurl) <= _threshold;
-    answer = answer && Math.Abs(HandPoseUtils.PinkyFingerCurl(Handedness.Any) - PinkyCurl) <= _threshold;
+    bool answer = Math.Abs(HandPoseUtils.ThumbFingerCurl(_handedness) - ThumbCurl) <= _threshold;
+    answer = answer && Math.Abs(HandPoseUtils.IndexFingerCurl(_handedness) - IndexCurl) <= _threshold;
+    answer = answer && Math.Abs(HandPoseUtils.MiddleFingerCurl(_handedness) - MiddleCurl) <= _threshold;
+    answer = answer && Math.Abs(HandPoseUtils.RingFingerCurl(_handedness) - RingCurl) <= _threshold;
+    answer = answer && Math.Abs(HandPoseUtils.PinkyFingerCurl(_handedness) - PinkyCurl) <= _threshold;
     answer = answer && IsNotDefaultPosition();
     
     return answer;
@@ -135,3 +129,62 @@ public class HandItalian : UnityEvent, CustomGesture {
 
 }
 
+public class HandFourthOption : UnityEvent, CustomGesture {
+
+  public float ThumbCurl { get; } = 0.7f;
+  public float IndexCurl { get; } = 0f;
+  public float MiddleCurl { get; } = 0f;
+  public float RingCurl { get; } = 0.1f;
+  public float PinkyCurl { get; } = 0.35f;
+  
+  // Fingers curl is not really important for this move, but are useful to differentiate with the italian hand
+  private float _threshold = 0.4f;
+  private Handedness _handedness; 
+
+  public bool IsOccuring() {
+    if (HandJointUtils.FindHand(Handedness.Right) == null) return false;
+    
+    bool answer = Math.Abs(HandPoseUtils.ThumbFingerCurl(_handedness) - ThumbCurl) <= _threshold;
+    answer = answer && Math.Abs(HandPoseUtils.IndexFingerCurl(_handedness) - IndexCurl) <= _threshold;
+    answer = answer && Math.Abs(HandPoseUtils.MiddleFingerCurl(_handedness) - MiddleCurl) <= _threshold;
+    answer = answer && Math.Abs(HandPoseUtils.RingFingerCurl(_handedness) - RingCurl) <= _threshold;
+    answer = answer && Math.Abs(HandPoseUtils.PinkyFingerCurl(_handedness) - PinkyCurl) <= _threshold;
+    
+    return answer && IsPinkyTouchingThumb();
+  }
+  
+  /// <summary>
+  /// Differentiate between default hand position and italian hand gesture.
+  /// </summary>
+  /// <returns>true if thumb tip is closer to all other finger tips than to its base.</returns>
+  public bool IsPinkyTouchingThumb() {
+    if (HandJointUtils.TryGetJointPose(TrackedHandJoint.ThumbTip, _handedness, out var thumbTipPose) &&
+        HandJointUtils.TryGetJointPose(TrackedHandJoint.PinkyTip, _handedness, out var pinkyTipPose)) {
+      float pinkyTipToThumbTip = Vector3.Distance(pinkyTipPose.Position,  thumbTipPose.Position);
+      return pinkyTipToThumbTip <= 0.015f;
+    }
+    return false;
+  }
+  
+  private HandFourthOption(Handedness handedness) {
+    _handedness = handedness;
+  }
+
+  // /////////////////////////
+  // Static fields and methods
+  // FIXME : how to implement this in the interface instead of repeating this in every class implementing it?
+  // /////////////////////////
+  
+  private static List<HandFourthOption> _instances = new List<HandFourthOption>();
+
+  public static HandFourthOption Instance(Handedness handedness) {
+    HandFourthOption maybeInstance = _instances.Find(i => i._handedness == handedness);
+    if (maybeInstance == null) {
+      HandFourthOption instance = new HandFourthOption(handedness);
+      _instances.Add(instance);
+      return instance;
+    }
+    return maybeInstance;
+  }
+
+}
