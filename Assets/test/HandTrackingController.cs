@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using JetBrains.Annotations;
 using Microsoft.MixedReality.Toolkit;
 using Microsoft.MixedReality.Toolkit.Input;
@@ -6,42 +8,51 @@ using UnityEngine;
 using UnityEngine.Events;
 
 public class HandTrackingController : MonoBehaviour {
-  
-  [Header("Gesture Settings")] 
-  public Handedness handedness = Handedness.Right; 
+  [Header("Gesture Settings")] public Handedness handedness = Handedness.Right;
   public Gestures openEvent = Gestures.HandWideOpen;
   public Gestures closeEvent = Gestures.HandItalian;
-  public Gestures pointingEvent = Gestures.HandPointing;
-  
-  [Header("Gesture registration")] 
-  public UnityEvent open;
+  public Gestures selectionEvent = Gestures.HandSelectionWithFinger;
+
+  [Header("Gesture registration")] public UnityEvent open;
   public UnityEvent close;
-  public GazeTargetEvent fourthSelection;
+  public GazeTargetEvent selection;
 
   [Header("Debugger Settings")] public bool useDebug;
   public GameObject debugUi;
   public Debugger.DebugMode debugMode = Debugger.DebugMode.Curl;
   private Debugger _debugger;
-  
+
   private bool _constrainerState;
+
   public bool ConstrainerState {
     set => _constrainerState = value;
   }
-  
+
   void Start() {
     if (useDebug) _debugger = new Debugger(debugUi, transform, handedness);
+    StartCoroutine(nameof(HandleHandGestureRecognition));
   }
 
   void Update() {
     if (useDebug) _debugger.DisplayDebug(debugMode);
-    
-    if (_constrainerState && GetGesture(openEvent).IsOccuring()) open.Invoke();
-    if (_constrainerState && GetGesture(closeEvent).IsOccuring()) close.Invoke();
-    if (GetGesture(pointingEvent).IsOccuring()) fourthSelection.Invoke(CoreServices.InputSystem.EyeGazeProvider.GazeTarget);
+  }
+
+  IEnumerator HandleHandGestureRecognition() {
+    while (true) {
+        if (_constrainerState && GetGesture(openEvent).IsOccuring()) open.Invoke();
+        if (_constrainerState && GetGesture(closeEvent).IsOccuring()) close.Invoke();
+        if (GetGesture(selectionEvent).IsOccuring()) {
+          // FIXME : GazeTarget is not updated when leaving gameobject
+          // If object too far away, not working too
+          selection.Invoke(CoreServices.InputSystem.EyeGazeProvider.GazeTarget);
+          yield return new WaitForSeconds(0.3f);
+        }
+        yield return new WaitForSeconds(0.05f);
+    }
   }
 
   [System.Serializable]
-  public class GazeTargetEvent: UnityEvent<GameObject> {}
+  public class GazeTargetEvent : UnityEvent<GameObject> { }
 
   public class Debugger {
     private readonly GameObject _uiObject;
@@ -97,8 +108,7 @@ public class HandTrackingController : MonoBehaviour {
   public enum Gestures {
     HandWideOpen = 0,
     HandItalian = 1,
-    HandPointing = 2,
-    HandFourthOption = 3
+    HandSelectionWithFinger = 2
   }
 
   [CanBeNull]
@@ -108,9 +118,10 @@ public class HandTrackingController : MonoBehaviour {
         return HandWideOpen.Instance(handedness);
       case Gestures.HandItalian:
         return HandItalian.Instance(handedness);
-      case Gestures.HandFourthOption:
-        return HandFourthOption.Instance(handedness);
+      case Gestures.HandSelectionWithFinger:
+        return HandSelectionWithFinger.Instance(handedness);
     }
+
     return null;
   }
 }

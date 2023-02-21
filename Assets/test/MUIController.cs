@@ -10,12 +10,12 @@ public class MUIController : MonoBehaviour {
     public Handedness handedness = Handedness.Right; 
     public HandTrackingController.Gestures openEvent = HandTrackingController.Gestures.HandWideOpen;
     public HandTrackingController.Gestures closeEvent = HandTrackingController.Gestures.HandItalian;
-    public HandTrackingController.Gestures fourthSelectionEvent = HandTrackingController.Gestures.HandPointing;
+    public HandTrackingController.Gestures selectionEvent = HandTrackingController.Gestures.HandSelectionWithFinger;
 
     [Header("Gesture registration")] 
     public UnityEvent open;
     public UnityEvent close;
-    public HandTrackingController.GazeTargetEvent fourthSelection;
+    public HandTrackingController.GazeTargetEvent selection;
 
     [Header("Debugger Settings")] public bool useDebug;
     public GameObject debugUi;
@@ -52,13 +52,13 @@ public class MUIController : MonoBehaviour {
         _controller.handedness = handedness;
         _controller.openEvent = openEvent;
         _controller.closeEvent = closeEvent;
-        _controller.pointingEvent = fourthSelectionEvent;
+        _controller.selectionEvent = selectionEvent;
         _controller.useDebug = useDebug;
         _controller.debugUi = debugUi;
         _controller.debugMode = debugMode;
         _controller.open = open;
         _controller.close = close;
-        _controller.fourthSelection = fourthSelection;
+        _controller.selection = selection;
     }
     
 }
